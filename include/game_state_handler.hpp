@@ -1,0 +1,5 @@
+class GameStateHandler
+{
+private:
+public:
+};

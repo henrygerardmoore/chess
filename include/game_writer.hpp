@@ -1,0 +1,5 @@
+class GameWriter
+{
+private:
+public:
+};
