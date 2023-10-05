@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-project(game LANGUAGES CXX C)
+project(chess LANGUAGES CXX C)
 
 add_definitions(-g)
 
@@ -13,8 +13,8 @@ find_package(spdlog REQUIRED)
 find_package(SFML REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-add_executable(game src/main.cpp)
+add_executable(chess src/main.cpp)
 
-target_link_libraries(game PRIVATE nlohmann_json::nlohmann_json sfml-graphics
+target_link_libraries(chess PRIVATE nlohmann_json::nlohmann_json sfml-graphics
                                     spdlog::spdlog)
-target_include_directories(game PRIVATE include)
+target_include_directories(chess PRIVATE include)
