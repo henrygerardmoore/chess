@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include <spdlog/spdlog.h>
+
 #include "board.hpp"
 
 Board::Board(std::shared_ptr<sf::RenderWindow> window) : window_(window) {
@@ -53,23 +55,44 @@ void Board::draw() {
   }
 
   // TODO(henrygerardmoore): display pieces
-
-  window_->display();
-  
 }
 
 std::vector<Move> Board::getValidMoves() {
-
+  // TODO(henrygerardmoore): implement returning vector of valid moves at a given board state
+  return {};
 }
 
 void Board::makeMove(Move m) {
-
+  // TODO(henrygerardmoore): implement making a move
 }
 
 std::string Board::toString(Move m) {
-
+  return "";
 }
 
-Piece Board::get_clicked_piece(int x, int y) {
+Piece Board::getClickedPiece(sf::Vector2i mouse_point) {
+  auto const pos_rel_top_left = mouse_point - sf::Vector2i(white_squares_.getPosition());
+  auto const square_edge = static_cast<int>(black_squares_[0].getSize().x);
+  sf::Vector2i const index = {pos_rel_top_left.x / square_edge, pos_rel_top_left.y / square_edge};
+  spdlog::debug("Clicked on square {}", indexToSquareName(index));
+  try {
+    return board_state_.at(index.y).at(index.x);
+  } catch(std::out_of_range const& e) {
+    throw std::domain_error("Mouse position not on chess board");
+  }
+}
 
+std::string Board::indexToSquareName(sf::Vector2i index) {
+  std::string square_name;
+  char file = 97 + index.x; // a is character 97, and we count columns from the left
+  char rank = 56 - index.y; // 8 is character 56, we count rows opposite order from chess
+  square_name += file;
+  square_name += rank;
+  return square_name;
+}
+
+bool Board::coordinateOnBoard(sf::Vector2i point) {
+  sf::Vector2i minPoint{static_cast<int>(white_squares_.getPosition().x), static_cast<int>(white_squares_.getPosition().y)};
+  sf::Vector2i maxPoint = minPoint + sf::Vector2i{static_cast<int>(white_squares_.getSize().x), static_cast<int>(white_squares_.getSize().y)};
+  return (point.x >= minPoint.x && point.x <= maxPoint.x && point.y >= minPoint.y && point.y <= maxPoint.y);
 }

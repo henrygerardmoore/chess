@@ -20,7 +20,7 @@ find_package(spdlog REQUIRED)
 find_package(SFML REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-add_executable(chess src/main.cpp src/board.cpp)
+add_executable(chess src/main.cpp src/board.cpp src/game_state_handler.cpp)
 add_backward(chess)
 
 target_link_libraries(chess PRIVATE nlohmann_json::nlohmann_json sfml-graphics

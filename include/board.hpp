@@ -1,3 +1,5 @@
+#pragma once
+
 #include <array>
 #include <memory>
 #include <string>
@@ -17,12 +19,14 @@ private:
   std::vector<sf::RectangleShape> black_squares_;
   sf::Color black_square_color_ = sf::Color::Black;
   sf::Color white_square_color_ = sf::Color::White;
-  sf::Color background_color_ = sf::Color::Blue;
+  sf::Color background_color_ = sf::Color(18, 72, 138); // nice blue color
+  std::string indexToSquareName(sf::Vector2i);
 public:
   Board(std::shared_ptr<sf::RenderWindow> window);
   void draw();
   std::vector<Move> getValidMoves();
   void makeMove(Move m);
   std::string toString(Move m);
-  Piece get_clicked_piece(int x, int y);
+  Piece getClickedPiece(sf::Vector2i);
+  bool coordinateOnBoard(sf::Vector2i);
 };
