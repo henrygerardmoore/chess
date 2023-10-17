@@ -1,0 +1,4 @@
+# Ignore everything in this directory so we can store our piece icons here
+*
+# Except this file
+!.gitignore
