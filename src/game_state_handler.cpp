@@ -14,12 +14,16 @@ void GameStateHandler::handleEvent(sf::Event event) {
     break;
   
   case sf::Event::MouseButtonPressed:
-    auto pos = sf::Mouse::getPosition(*window_);
-    if (board_->coordinateOnBoard(pos)) {
-      auto const& piece = board_->getClickedPiece(pos);
-      spdlog::debug("Clicked on {}",  pieceToString(piece));
-      // TODO (henrygerardmoore): piece handling
+    {
+      auto pos = sf::Mouse::getPosition(*window_);
+      if (board_->coordinateOnBoard(pos)) {
+        auto const& piece = board_->getClickedPiece(pos);
+        spdlog::debug("Clicked on {}",  pieceToString(piece));
+        // TODO (henrygerardmoore): piece handling
+      }
     }
+  default:
+  break;
   }
 }
 

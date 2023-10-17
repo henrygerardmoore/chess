@@ -8,6 +8,47 @@ Board::Board(std::shared_ptr<sf::RenderWindow> window) : window_(window) {
   for (std::size_t i = 0; i < 32; ++i) {
     black_squares_.emplace_back();
   }
+
+  for (Piece piece_type : pieceIterator()) {
+    if (piece_type == Piece::empty) {
+      continue;
+    }
+    sf::Texture t;
+    std::string filename = "./piece_images/" + pieceToString(piece_type) + ".png";
+    if (!t.loadFromFile(filename)) {
+      throw std::runtime_error("Unable to load " + pieceToString(piece_type) + " image. Check that " + filename + " exists and is readable.");
+    }
+    assert(t.getSize().x == t.getSize().y && "Piece textures must be square");
+    piece_textures_[piece_type] =  t;
+  }
+
+
+  // set up pieces
+  board_state_[0][0] = Piece::b_rook;
+  board_state_[0][7] = Piece::b_rook;
+  board_state_[7][0] = Piece::w_rook;
+  board_state_[7][7] = Piece::w_rook;
+
+  board_state_[0][1] = Piece::b_knight;
+  board_state_[0][6] = Piece::b_knight;
+  board_state_[7][1] = Piece::w_knight;
+  board_state_[7][6] = Piece::w_knight;
+
+  board_state_[0][2] = Piece::b_bishop;
+  board_state_[0][5] = Piece::b_bishop;
+  board_state_[7][2] = Piece::w_bishop;
+  board_state_[7][5] = Piece::w_bishop;
+  
+  board_state_[0][3] = Piece::b_queen;
+  board_state_[0][4] = Piece::b_king;
+  board_state_[7][3] = Piece::w_queen;
+  board_state_[7][4] = Piece::w_king;
+
+  // set up pawns
+  for (std::size_t i = 0; i < 8; ++i) {
+    board_state_[1][i] = Piece::b_pawn;
+    board_state_[6][i] = Piece::w_pawn;
+  }
 }
 
 void Board::draw() {
@@ -16,7 +57,7 @@ void Board::draw() {
 
   // resize window view
   auto const dims = window_->getSize();
-  window_->setView(sf::View(sf::FloatRect(0, 0, dims.x, dims.y)));
+  window_->setView(sf::View(sf::FloatRect(0, 0, static_cast<float>(dims.x), static_cast<float>(dims.y))));
 
   // get smaller dimension and use that as the ideal board edge
   auto const ideal_board_edge = dims.x < dims.y ? dims.x : dims.y;
@@ -34,23 +75,32 @@ void Board::draw() {
   std::for_each(black_squares_.begin(), black_squares_.end(), [&](sf::RectangleShape& square){square.setSize({static_cast<float>(square_edge), static_cast<float>(square_edge)});});
 
   // set white square location and size
-  white_squares_.setPosition(x_offset, y_offset);
+  white_squares_.setPosition(static_cast<float>(x_offset), static_cast<float>(y_offset));
   window_->draw(white_squares_);
 
-  // set each black square location and size
+  // set each black square location and size and draw pieces
   for (std::size_t i = 0; i < 8; ++i) {
-    for (std::size_t j = 0; j < 4; ++j) {
-      auto & cur_square = black_squares_.at(i * 4 + j);
+    for (std::size_t j = 0; j < 8; ++j) {
       sf::Vector2f cur_square_position;
-      cur_square_position.y = i * square_edge + y_offset;
-      cur_square_position.x = 2 * j * square_edge + x_offset;
+      cur_square_position.y = static_cast<float>(i * square_edge + y_offset);
+      cur_square_position.x = static_cast<float>(j * square_edge + x_offset);
+      if ((i + j) % 2 == 1) {
+        auto & cur_square = black_squares_.at(i * 4 + j / 2);
 
-      // every other row of black squares is offset by one square to create the checkerboard
-      if (i % 2 == 0) {
-        cur_square_position.x += square_edge;
+        cur_square.setPosition(cur_square_position);
+        window_->draw(cur_square);
       }
-      cur_square.setPosition(cur_square_position);
-      window_->draw(cur_square);
+      auto const piece = board_state_[i][j];
+      if (piece != Piece::empty) {
+        auto const& cur_texture = piece_textures_[piece];
+        auto const texture_size = cur_texture.getSize(); // all our textures are square
+        sf::Sprite piece_sprite;
+        piece_sprite.setTexture(cur_texture);
+        piece_sprite.setPosition(cur_square_position);
+        piece_sprite.setScale(static_cast<float>(square_edge) / static_cast<float>(texture_size.x), static_cast<float>(square_edge) / static_cast<float>(texture_size.y));
+        window_->draw(piece_sprite);
+      }
+
     }
   }
 
@@ -62,12 +112,8 @@ std::vector<Move> Board::getValidMoves() {
   return {};
 }
 
-void Board::makeMove(Move m) {
+void Board::makeMove(Move /**/) {
   // TODO(henrygerardmoore): implement making a move
-}
-
-std::string Board::toString(Move m) {
-  return "";
 }
 
 Piece Board::getClickedPiece(sf::Vector2i mouse_point) {
@@ -75,8 +121,9 @@ Piece Board::getClickedPiece(sf::Vector2i mouse_point) {
   auto const square_edge = static_cast<int>(black_squares_[0].getSize().x);
   sf::Vector2i const index = {pos_rel_top_left.x / square_edge, pos_rel_top_left.y / square_edge};
   spdlog::debug("Clicked on square {}", indexToSquareName(index));
+  spdlog::debug("Clicked on index ({},{})", index.x, index.y);
   try {
-    return board_state_.at(index.y).at(index.x);
+    return board_state_[static_cast<std::size_t>(index.y)][static_cast<std::size_t>(index.x)];
   } catch(std::out_of_range const& e) {
     throw std::domain_error("Mouse position not on chess board");
   }
@@ -84,8 +131,8 @@ Piece Board::getClickedPiece(sf::Vector2i mouse_point) {
 
 std::string Board::indexToSquareName(sf::Vector2i index) {
   std::string square_name;
-  char file = 97 + index.x; // a is character 97, and we count columns from the left
-  char rank = 56 - index.y; // 8 is character 56, we count rows opposite order from chess
+  char file = static_cast<char>(97 + index.x); // a is character 97, and we count columns from the left
+  char rank = static_cast<char>(56 - index.y); // 8 is character 56, we count rows opposite order from chess
   square_name += file;
   square_name += rank;
   return square_name;
